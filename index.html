@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกความดันโลหิต</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 850px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-clear {
+            background-color: #dc3545;
+            width: auto;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-clear:hover {
+            background-color: #bd2130;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background-color: #e9ecef;
+            position: sticky;
+            top: 0;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .bg-normal { background: #d4edda; color: #155724; }
+        .bg-elevated { background: #fff3cd; color: #856404; }
+        .bg-stage1 { background: #ffeba2; color: #856404; }
+        .bg-stage2 { background: #f8d7da; color: #721c24; }
+
+        .btn-delete {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            width: auto;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🩸 ระบบบันทึกความดันโลหิต</h1>
+    
+    <div class="layout">
+        <!-- ฟอร์มกรอกข้อมูล -->
+        <div class="card">
+            <h2>📝 บันทึกข้อมูลใหม่</h2>
+            <form id="bpForm">
+                <div class="form-group">
+                    <label for="systolic">ค่าตัวบน (Systolic - mmHg)</label>
+                    <input type="number" id="systolic" placeholder="เช่น 120" min="50" max="250" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="diastolic">ค่าตัวล่าง (Diastolic - mmHg)</label>
+                    <input type="number" id="diastolic" placeholder="เช่น 80" min="30" max="150" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pulse">อัตราชีพจร (Pulse - bpm)</label>
+                    <input type="number" id="pulse" placeholder="เช่น 75" min="30" max="200">
+                </div>
+
+                <!-- ช่องเลือกช่วงเวลา (Dropdown) -->
+                <div class="form-group">
+                    <label for="timeOfDay">ช่วงเวลาที่วัด</label>
+                    <select id="timeOfDay">
+                        <option value="หลังตื่นนอน (เช้า)">🌅 หลังตื่นนอน (เช้า)</option>
+                        <option value="ก่อนนอน">🌙 ก่อนนอน</option>
+                        <option value="ระหว่างวัน">☀️ ระหว่างวัน</option>
+                        <option value="หลังทานอาหาร">🍽️ หลังทานอาหาร</option>
+                        <option value="หลังออกกำลังกาย">🏃 หลังออกกำลังกาย</option>
+                        <option value="อื่นๆ">📌 อื่นๆ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="note">หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                    <input type="text" id="note" placeholder="เช่น รู้สึกปวดหัว / ทานยาแล้ว">
+                </div>
+                
+                <button type="submit">💾 บันทึกข้อมูล</button>
+            </form>
+        </div>
+
+        <!-- ตารางแสดงประวัติ -->
+        <div class="card">
+            <div class="header-actions">
+                <h2>📋 ประวัติการบันทึก</h2>
+                <button class="btn-clear" onclick="clearAllRecords()">ลบทั้งหมด</button>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วัน-เวลา</th>
+                            <th>ช่วงเวลา</th>
+                            <th>ความดัน</th>
+                            <th>ชีพจร</th>
+                            <th>สถานะ</th>
+                            <th>หมายเหตุ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTable">
+                        <!-- รายการบันทึกจะแสดงที่นี่ -->
+                    </tbody>
+                </table>
+                <div id="emptyMsg" class="empty-msg" style="display: none;">ยังไม่มีข้อมูลในระบบ</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
+    document.addEventListener('DOMContentLoaded', displayRecords);
+
+    // รับ event การกดส่งฟอร์ม
+    document.getElementById('bpForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const systolic = parseInt(document.getElementById('systolic').value);
+        const diastolic = parseInt(document.getElementById('diastolic').value);
+        const pulse = document.getElementById('pulse').value || '-';
+        const timeOfDay = document.getElementById('timeOfDay').value;
+        const note = document.getElementById('note').value.trim() || '-';
+        
+        const now = new Date();
+        const timestamp = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+        const evaluation = evaluateBP(systolic, diastolic);
+
+        const newRecord = {
+            id: Date.now(),
+            timestamp: timestamp,
+            timeOfDay: timeOfDay,
+            systolic: systolic,
+            diastolic: diastolic,
+            pulse: pulse,
+            status: evaluation.status,
+            badgeClass: evaluation.badgeClass,
+            note: note
+        };
+
+        saveRecord(newRecord);
+        displayRecords();
+        
+        // รีเซ็ตค่าเฉพาะตัวเลขและหมายเหตุ (คงค่าช่วงเวลาไว้)
+        document.getElementById('systolic').value = '';
+        document.getElementById('diastolic').value = '';
+        document.getElementById('pulse').value = '';
+        document.getElementById('note').value = '';
+    });
+
+    // ประเมินผลระดับความดัน
+    function evaluateBP(sys, dia) {
+        if (sys < 120 && dia < 80) {
+            return { status: 'ปกติ', badgeClass: 'bg-normal' };
+        } else if (sys >= 120 && sys <= 129 && dia < 80) {
+            return { status: 'เริ่มสูง', badgeClass: 'bg-elevated' };
+        } else if ((sys >= 130 && sys <= 139) || (dia >= 80 && dia <= 89)) {
+            return { status: 'สูง ระยะ 1', badgeClass: 'bg-stage1' };
+        } else if (sys >= 140 || dia >= 90) {
+            return { status: 'สูง ระยะ 2', badgeClass: 'bg-stage2' };
+        }
+        return { status: 'ไม่ระบุ', badgeClass: '' };
+    }
+
+    // บันทึกลง LocalStorage
+    function saveRecord(record) {
+        let records = JSON.parse(localStorage.getItem('bp_records')) || [];
+        records.unshift(record);
+        localStorage.setItem('bp_records', JSON.stringify(records));
+    }
+
+    // แสดงผลข้อมูลลงในตาราง
+    function displayRecords() {
+        const records = JSON.parse(localStorage.getItem('bp_records')) || [];
+        const tbody = document.getElementById('recordsTable');
+        const emptyMsg = document.getElementById('emptyMsg');
+
+        tbody.innerHTML = '';
+
+        if (records.length === 0) {
+            emptyMsg.style.display = 'block';
+            return;
+        }
+
+        emptyMsg.style.display = 'none';
+
+        records.forEach(record => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${record.timestamp}</td>
+                <td><b>${record.timeOfDay || '-'}</b></td>
+                <td><b>${record.systolic}/${record.diastolic}</b></td>
+                <td>${record.pulse}</td>
+                <td><span class="badge ${record.badgeClass}">${record.status}</span></td>
+                <td>${record.note}</td>
+                <td><button class="btn-delete" onclick="deleteRecord(${record.id})">ลบ</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ลบรายการเดียว
+    function deleteRecord(id) {
+        let records = JSON.parse(localStorage.getItem('bp_records')) || [];
+        records = records.filter(record => record.id !== id);
+        localStorage.setItem('bp_records', JSON.stringify(records));
+        displayRecords();
+    }
+
+    // ลบรายการทั้งหมด
+    function clearAllRecords() {
+        if (confirm('คุณต้องการลบประวัติความดันทั้งหมดใช่หรือไม่?')) {
+            localStorage.removeItem('bp_records');
+            displayRecords();
+        }
+    }
+</script>
+
+</body>
+</html>
