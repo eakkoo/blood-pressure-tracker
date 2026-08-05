@@ -186,6 +186,12 @@
         <div class="card">
             <h2>📝 บันทึกข้อมูลใหม่</h2>
             <form id="bpForm">
+                <!-- ช่องใส่วัน-เวลา (เลือกเองได้) -->
+                <div class="form-group">
+                    <label for="recordDateTime">วัน-เวลาที่วัด</label>
+                    <input type="datetime-local" id="recordDateTime" required>
+                </div>
+
                 <div class="form-group">
                     <label for="systolic">ค่าตัวบน (Systolic - mmHg)</label>
                     <input type="number" id="systolic" placeholder="เช่น 120" min="50" max="250" required>
@@ -201,12 +207,14 @@
                     <input type="number" id="pulse" placeholder="เช่น 75" min="30" max="200">
                 </div>
 
-                <!-- ช่องเลือกช่วงเวลา (Dropdown) -->
+                <!-- ช่องเลือกช่วงเวลา (เพิ่ม ก่อน/หลัง กินยา) -->
                 <div class="form-group">
                     <label for="timeOfDay">ช่วงเวลาที่วัด</label>
                     <select id="timeOfDay">
                         <option value="หลังตื่นนอน (เช้า)">🌅 หลังตื่นนอน (เช้า)</option>
                         <option value="ก่อนนอน">🌙 ก่อนนอน</option>
+                        <option value="ก่อนกินยา">💊 ก่อนกินยา</option>
+                        <option value="หลังกินยา">💊 หลังกินยา</option>
                         <option value="ระหว่างวัน">☀️ ระหว่างวัน</option>
                         <option value="หลังทานอาหาร">🍽️ หลังทานอาหาร</option>
                         <option value="หลังออกกำลังกาย">🏃 หลังออกกำลังกาย</option>
@@ -216,7 +224,7 @@
                 
                 <div class="form-group">
                     <label for="note">หมายเหตุเพิ่มเติม (ถ้ามี)</label>
-                    <input type="text" id="note" placeholder="เช่น รู้สึกปวดหัว / ทานยาแล้ว">
+                    <input type="text" id="note" placeholder="เช่น รู้สึกปวดหัว / ชื่อยาที่ทาน">
                 </div>
                 
                 <button type="submit">💾 บันทึกข้อมูล</button>
@@ -254,21 +262,33 @@
 </div>
 
 <script>
+    // ตั้งค่าวัน-เวลาปัจจุบันลงในอินพุต
+    function setDefaultDateTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('recordDateTime').value = now.toISOString().slice(0, 16);
+    }
+
     // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
-    document.addEventListener('DOMContentLoaded', displayRecords);
+    document.addEventListener('DOMContentLoaded', function() {
+        setDefaultDateTime();
+        displayRecords();
+    });
 
     // รับ event การกดส่งฟอร์ม
     document.getElementById('bpForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
+        const inputDateTime = document.getElementById('recordDateTime').value;
         const systolic = parseInt(document.getElementById('systolic').value);
         const diastolic = parseInt(document.getElementById('diastolic').value);
         const pulse = document.getElementById('pulse').value || '-';
         const timeOfDay = document.getElementById('timeOfDay').value;
         const note = document.getElementById('note').value.trim() || '-';
         
-        const now = new Date();
-        const timestamp = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        // แปลงวัน-เวลาที่เลือกให้อยู่ในรูปแบบอ่านง่าย (ภาษาไทย)
+        const selectedDate = new Date(inputDateTime);
+        const timestamp = selectedDate.toLocaleDateString('th-TH') + ' ' + selectedDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 
         const evaluation = evaluateBP(systolic, diastolic);
 
@@ -287,11 +307,12 @@
         saveRecord(newRecord);
         displayRecords();
         
-        // รีเซ็ตค่าเฉพาะตัวเลขและหมายเหตุ (คงค่าช่วงเวลาไว้)
+        // รีเซ็ตค่าเฉพาะตัวเลขและหมายเหตุ (คงค่าช่วงเวลา และอัปเดตเวลาเป็นปัจจุบัน)
         document.getElementById('systolic').value = '';
         document.getElementById('diastolic').value = '';
         document.getElementById('pulse').value = '';
         document.getElementById('note').value = '';
+        setDefaultDateTime();
     });
 
     // ประเมินผลระดับความดัน
